@@ -12,15 +12,18 @@ export class TestDiscovery {
   private testPattern: string;
   private baseDir: string;
   private excludePatterns: string[];
+  private wdioPath: string;
 
   constructor(
     baseDir: string = process.cwd(), 
-    testPattern: string = '**/*.spec.{js,ts}',
-    excludePatterns: string[] = ['**/node_modules/**']
+    testPattern: string = '**/*.{spec,test}.{js,ts}',
+    excludePatterns: string[] = ['**/node_modules/**'],
+    wdioPath: string = 'integration/wdio'
   ) {
     this.baseDir = baseDir;
     this.testPattern = testPattern;
     this.excludePatterns = excludePatterns;
+    this.wdioPath = wdioPath;
   }
 
   /**
@@ -28,15 +31,31 @@ export class TestDiscovery {
    */
   async findTestFiles(): Promise<TestFile[]> {
     try {
-      const files = await glob(this.testPattern, { 
-        cwd: this.baseDir,
+      // First check if we're already in the wdio directory
+      let searchDir = this.baseDir;
+      const wdioDir = path.join(this.baseDir, this.wdioPath);
+      
+      if (fs.existsSync(wdioDir)) {
+        // If the wdio directory exists, use it as the base for searching
+        searchDir = wdioDir;
+      }
+      
+      // Add tests folder to the pattern if it's not already included
+      let searchPattern = this.testPattern;
+      if (!searchPattern.includes('tests/') && !searchPattern.startsWith('tests')) {
+        // Support both direct tests folder and nested folders
+        searchPattern = `{tests/**,**}/` + searchPattern;
+      }
+
+      const files = await glob(searchPattern, { 
+        cwd: searchDir,
         ignore: this.excludePatterns
       });
       
       const testFiles: TestFile[] = [];
       
       for (const file of files) {
-        const filePath = path.join(this.baseDir, file);
+        const filePath = path.join(searchDir, file);
         const specs = await this.extractTestSpecs(filePath);
         
         testFiles.push({

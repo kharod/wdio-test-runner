@@ -1,3 +1,10 @@
+/**
+ * Example consumer project WebdriverIO config file
+ * 
+ * The wdio-test-runner-ui package will use this config file
+ * when run from within this directory.
+ */
+
 exports.config = {
     //
     // ====================

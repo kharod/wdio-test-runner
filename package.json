@@ -1,7 +1,7 @@
 {
   "name": "wdio-test-runner-ui",
   "version": "1.0.0",
-  "description": "UI Test Runner for WebdriverIO",
+  "description": "UI Test Runner for WebdriverIO that uses consumer project config. Supports .spec.ts and .test.ts files and integration/wdio project structure.",
   "main": "dist/index.js",
   "bin": {
     "wdio-test-runner-ui": "dist/cli.js"
@@ -46,7 +46,8 @@
     "test",
     "testing",
     "ui",
-    "runner"
+    "runner",
+    "consumer-config"
   ],
   "author": "",
   "license": "MIT"

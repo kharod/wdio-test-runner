@@ -97,7 +97,7 @@ export class TestRunner {
     let baseConfigPath = this.wdioConfigPath || '';
     
     if (!baseConfigPath) {
-      // Look for common config file names
+      // Look for common config file names in the consumer's project
       const configFiles = [
         'wdio.conf.js',
         'wdio.conf.ts',
@@ -115,7 +115,7 @@ export class TestRunner {
     }
     
     if (!baseConfigPath) {
-      throw new Error('Could not find WebdriverIO configuration file');
+      throw new Error('Could not find WebdriverIO configuration file in the consumer project. Please provide a path to your wdio config file using the --config option.');
     }
     
     // Create a temporary config file that extends the base config
@@ -141,7 +141,7 @@ export class TestRunner {
           grep: '${spec.replace(/'/g, '\\\'')}'
         },` : ''}
         capabilities: [{
-          ...baseConfig.config.capabilities[0],
+          ...(baseConfig.config.capabilities && baseConfig.config.capabilities[0] ? baseConfig.config.capabilities[0] : {}),
           'goog:chromeOptions': {
             ${chromeOptions}
           }

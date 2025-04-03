@@ -17,13 +17,14 @@ program
   .command('start')
   .description('Start the WebdriverIO Test Runner UI')
   .option('-p, --port <port>', 'Port to run the server on', '3000')
-  .option('-t, --test-pattern <pattern>', 'Pattern to find test files', '**/*.spec.{js,ts}')
+  .option('-t, --test-pattern <pattern>', 'Pattern to find test files', '**/*.{spec,test}.{js,ts}')
   .option('-d, --directory <directory>', 'Directory to search for tests', process.cwd())
   .option('-e, --exclude <pattern>', 'Pattern to exclude (can be used multiple times)', (val, prev) => {
     prev.push(val);
     return prev;
   }, ['**/node_modules/**'])
   .option('-c, --config <file>', 'Path to wdio config file')
+  .option('-w, --wdio-path <path>', 'Path to WebdriverIO project relative to directory', 'integration/wdio')
   .action((options) => {
     // Validate directory
     if (!fs.existsSync(options.directory)) {
@@ -42,7 +43,8 @@ program
       testPattern: options.testPattern,
       baseDir: path.resolve(options.directory),
       excludePatterns: options.exclude,
-      wdioConfigPath: options.config ? path.resolve(options.config) : undefined
+      wdioConfigPath: options.config ? path.resolve(options.config) : undefined,
+      wdioPath: options.wdioPath
     };
 
     console.log('Starting WebdriverIO Test Runner UI with config:', config);

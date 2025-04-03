@@ -11,6 +11,7 @@ export interface ServerConfig {
   testPattern?: string;
   excludePatterns?: string[];
   wdioConfigPath?: string;
+  wdioPath?: string;
 }
 
 export function startServer(config: ServerConfig = {}) {
@@ -30,7 +31,8 @@ export function startServer(config: ServerConfig = {}) {
   const testDiscovery = new TestDiscovery(
     config.baseDir,
     config.testPattern,
-    config.excludePatterns
+    config.excludePatterns,
+    config.wdioPath
   );
   
   const testRunner = new TestRunner(io, config.wdioConfigPath);
