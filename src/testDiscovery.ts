@@ -12,13 +12,13 @@ export class TestDiscovery {
   private testPattern: string;
   private baseDir: string;
   private excludePatterns: string[];
-  private wdioPath: string;
+  private wdioPath: string | undefined;
 
   constructor(
     baseDir: string = process.cwd(), 
     testPattern: string = '**/*.{spec,test}.{js,ts}',
     excludePatterns: string[] = ['**/node_modules/**'],
-    wdioPath: string = 'integration/wdio'
+    wdioPath?: string
   ) {
     this.baseDir = baseDir;
     this.testPattern = testPattern;
@@ -31,25 +31,32 @@ export class TestDiscovery {
    */
   async findTestFiles(): Promise<TestFile[]> {
     try {
-      // First check if we're already in the wdio directory
+      // First check if we should use a specific wdio directory
       let searchDir = this.baseDir;
-      const wdioDir = path.join(this.baseDir, this.wdioPath);
       
-      if (fs.existsSync(wdioDir)) {
+      if (this.wdioPath && fs.existsSync(path.join(this.baseDir, this.wdioPath))) {
         // If the wdio directory exists, use it as the base for searching
-        searchDir = wdioDir;
+        searchDir = path.join(this.baseDir, this.wdioPath);
+      } else {
+        // If wdio path is not specified or doesn't exist, try some common test directories
+        const commonTestDirs = ['test', 'tests', 'e2e', 'integration', 'specs'];
+        
+        for (const dir of commonTestDirs) {
+          const testDir = path.join(this.baseDir, dir);
+          if (fs.existsSync(testDir) && fs.statSync(testDir).isDirectory()) {
+            searchDir = testDir;
+            break;
+          }
+        }
       }
       
       // Add tests folder to the pattern if it's not already included
       let searchPattern = this.testPattern;
-      if (!searchPattern.includes('tests/') && !searchPattern.startsWith('tests')) {
-        // Support both direct tests folder and nested folders
-        searchPattern = `{tests/**,**}/` + searchPattern;
-      }
 
       const files = await glob(searchPattern, { 
         cwd: searchDir,
-        ignore: this.excludePatterns
+        ignore: this.excludePatterns,
+        absolute: false
       });
       
       const testFiles: TestFile[] = [];
@@ -83,6 +90,7 @@ export class TestDiscovery {
       // based on how tests are written
       const describeRegex = /describe\s*\(\s*['"`]([^'"`]+)['"`]/g;
       const itRegex = /it\s*\(\s*['"`]([^'"`]+)['"`]/g;
+      const testRegex = /test\s*\(\s*['"`]([^'"`]+)['"`]/g;
       
       const specs: string[] = [];
       
@@ -92,6 +100,10 @@ export class TestDiscovery {
       }
       
       while ((match = itRegex.exec(content)) !== null) {
+        specs.push(match[1]);
+      }
+      
+      while ((match = testRegex.exec(content)) !== null) {
         specs.push(match[1]);
       }
       

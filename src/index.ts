@@ -14,7 +14,12 @@ export interface ServerConfig {
   wdioPath?: string;
 }
 
-export function startServer(config: ServerConfig = {}) {
+/**
+ * Start the WebdriverIO Test Runner UI server
+ * @param config Configuration options
+ * @returns HTTP server instance
+ */
+export function startTestRunnerUI(config: ServerConfig = {}) {
   // Initialize Express app
   const app = express();
   const server = http.createServer(app);
@@ -29,9 +34,9 @@ export function startServer(config: ServerConfig = {}) {
   
   // Initialize test discovery and runner
   const testDiscovery = new TestDiscovery(
-    config.baseDir,
-    config.testPattern,
-    config.excludePatterns,
+    config.baseDir || process.cwd(),
+    config.testPattern || '**/*.{spec,test}.{js,ts}',
+    config.excludePatterns || ['**/node_modules/**'],
     config.wdioPath
   );
   
@@ -82,7 +87,12 @@ export function startServer(config: ServerConfig = {}) {
   return server;
 }
 
+// Export the TestDiscovery and TestRunner classes for easier integration
+export { TestDiscovery } from './testDiscovery';
+export { TestRunner } from './testRunner';
+export * from './testDiscovery';
+
 // If this file is executed directly, start the server
 if (require.main === module) {
-  startServer();
+  startTestRunnerUI();
 } 

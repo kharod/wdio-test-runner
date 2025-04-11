@@ -102,7 +102,15 @@ export class TestRunner {
         'wdio.conf.js',
         'wdio.conf.ts',
         'wdio.config.js',
-        'wdio.config.ts'
+        'wdio.config.ts',
+        'e2e/wdio.conf.js',
+        'e2e/wdio.conf.ts',
+        'test/wdio.conf.js',
+        'test/wdio.conf.ts',
+        'tests/wdio.conf.js',
+        'tests/wdio.conf.ts',
+        'integration/wdio.conf.js',
+        'integration/wdio.conf.ts'
       ];
       
       for (const file of configFiles) {
@@ -115,7 +123,7 @@ export class TestRunner {
     }
     
     if (!baseConfigPath) {
-      throw new Error('Could not find WebdriverIO configuration file in the consumer project. Please provide a path to your wdio config file using the --config option.');
+      throw new Error('Could not find WebdriverIO configuration file in the consumer project. Please provide a path to your wdio config file when starting the test runner.');
     }
     
     // Create a temporary config file that extends the base config
@@ -123,25 +131,36 @@ export class TestRunner {
     const tempConfigPath = path.join(this.tempConfigDir, tempConfigFilename);
     
     // Use path.relative to create a relative path from the temp config to the base config
-    const relativeBaseConfigPath = path.relative(this.tempConfigDir, baseConfigPath);
+    let relativeBaseConfigPath = path.relative(this.tempConfigDir, baseConfigPath);
+    
+    // Convert to posix path format for require statement
+    relativeBaseConfigPath = relativeBaseConfigPath.replace(/\\/g, '/');
+    
+    // If the path doesn't start with ./ or ../ add ./
+    if (!relativeBaseConfigPath.startsWith('.')) {
+      relativeBaseConfigPath = `./${relativeBaseConfigPath}`;
+    }
     
     // Set up the chrome options based on headless mode
     const chromeOptions = headless ? 
-      `args: ['--headless', '--disable-gpu', '--no-sandbox']` :
+      `args: ['--headless=new', '--disable-gpu', '--no-sandbox']` :
       `args: ['--disable-gpu', '--no-sandbox']`;
     
+    // Generate a temporary config that extends the project's config
     const configContent = `
-      const baseConfig = require('${relativeBaseConfigPath.replace(/\\/g, '\\\\')}');
+      const path = require('path');
+      const baseConfig = require('${relativeBaseConfigPath}');
       
       exports.config = {
         ...baseConfig.config,
-        specs: ['${testFile.replace(/\\/g, '\\\\')}'],
+        specs: ['${testFile.replace(/\\/g, '/')}'],
         ${spec ? `mochaOpts: {
           ...baseConfig.config.mochaOpts,
           grep: '${spec.replace(/'/g, '\\\'')}'
         },` : ''}
         capabilities: [{
           ...(baseConfig.config.capabilities && baseConfig.config.capabilities[0] ? baseConfig.config.capabilities[0] : {}),
+          browserName: 'chrome',
           'goog:chromeOptions': {
             ${chromeOptions}
           }

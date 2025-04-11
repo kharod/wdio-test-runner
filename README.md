@@ -1,6 +1,6 @@
 # WebdriverIO Test Runner UI
 
-A standalone UI for running WebdriverIO tests with a visual interface.
+A web-based UI for running WebdriverIO tests in existing projects.
 
 ## Features
 
@@ -8,21 +8,15 @@ A standalone UI for running WebdriverIO tests with a visual interface.
 - Real-time test output
 - Support for running specific tests or test suites
 - Headless mode support
-- Works with any WebdriverIO project
+- Works with any existing WebdriverIO project
 - Always uses your project's WebdriverIO configuration
 - Support for both `.spec.ts` and `.test.ts` files
-- Auto-detection of tests in `tests` folder
-- Support for projects with WebdriverIO in `integration/wdio` structure
+- Auto-detection of common test directories
+- Compatible with various WebdriverIO project structures
 
 ## Installation
 
-### Global Installation
-
-```bash
-npm install -g wdio-test-runner-ui
-```
-
-### Local Installation
+Add to your existing WebdriverIO project:
 
 ```bash
 npm install --save-dev wdio-test-runner-ui
@@ -33,10 +27,7 @@ npm install --save-dev wdio-test-runner-ui
 ### Command Line
 
 ```bash
-# Using global installation
-wdio-test-runner-ui start
-
-# Using local installation
+# Using local installation in your project
 npx wdio-test-runner-ui start
 ```
 
@@ -50,41 +41,47 @@ Start the WebdriverIO Test Runner UI
 Options:
   -p, --port <port>             Port to run the server on (default: "3000")
   -t, --test-pattern <pattern>  Pattern to find test files (default: "**/*.{spec,test}.{js,ts}")
-  -d, --directory <directory>   Directory to search for tests (default: current directory)
+  -d, --directory <directory>   Directory to search for tests (defaults to current directory)
   -e, --exclude <pattern>       Pattern to exclude (can be used multiple times) (default: ["**/node_modules/**"])
   -c, --config <file>           Path to wdio config file (will auto-detect if not specified)
-  -w, --wdio-path <path>        Path to WebdriverIO project relative to directory (default: "integration/wdio")
+  -w, --wdio-path <path>        Path to WebdriverIO test directory relative to base directory
   -h, --help                    display help for command
+```
+
+You can also use the `list-tests` command to see which test files would be discovered:
+
+```bash
+npx wdio-test-runner-ui list-tests
 ```
 
 ### Examples
 
 ```bash
 # Start with default settings
-wdio-test-runner-ui start
+npx wdio-test-runner-ui start
 
 # Specify a different port
-wdio-test-runner-ui start --port 8080
+npx wdio-test-runner-ui start --port 8080
 
 # Specify a different test pattern
-wdio-test-runner-ui start --test-pattern "**/*.e2e.js"
+npx wdio-test-runner-ui start --test-pattern "**/*.e2e.js"
 
 # Specify a different directory
-wdio-test-runner-ui start --directory ./tests
+npx wdio-test-runner-ui start --directory ./tests
 
-# Specify a different WebdriverIO project path
-wdio-test-runner-ui start --wdio-path ./custom/wdio/path
+# Specify a different WebdriverIO test path
+npx wdio-test-runner-ui start --wdio-path ./e2e/tests
 
 # Exclude multiple patterns
-wdio-test-runner-ui start --exclude "**/node_modules/**" --exclude "**/fixtures/**"
+npx wdio-test-runner-ui start --exclude "**/node_modules/**" --exclude "**/fixtures/**"
 
 # Specify a custom WebdriverIO config file
-wdio-test-runner-ui start --config ./wdio.custom.conf.js
+npx wdio-test-runner-ui start --config ./wdio.custom.conf.js
 ```
 
 ### Adding to your project scripts
 
-You can add a script to your package.json for easy access:
+Add a script to your package.json for easy access:
 
 ```json
 {
@@ -100,60 +97,82 @@ Then run with:
 npm run test:ui
 ```
 
-## Project Structure Support
+## Integration with Existing Project
 
-This tool supports different project structures:
+This package is designed to integrate with existing WebdriverIO projects. It does the following:
 
-### Standard WebdriverIO Project
+1. Detects your existing WebdriverIO configuration
+2. Finds your test files using common patterns
+3. Provides a UI to select and run tests
+4. Uses your project's WebdriverIO configuration for test execution
+
+### Supported Project Structures
+
+The test runner will automatically detect these common structures:
 
 ```
 project-root/
 ├── wdio.conf.js
-├── tests/
-│   └── example.spec.ts
+└── tests/
+    └── example.spec.ts
 ```
-
-### Project with WebdriverIO in integration/wdio
 
 ```
 project-root/
-├── integration/
-│   └── wdio/
-│       ├── wdio.conf.js
-│       └── tests/
-│           └── example.test.ts
+├── test/
+│   ├── wdio.conf.js
+│   └── specs/
+│       └── example.spec.ts
 ```
 
-The tool will automatically detect if your project follows the `integration/wdio` structure and will search for tests in that directory.
-
-### Test File Naming Conventions
-
-The tool supports both `.spec.ts` and `.test.ts` file extensions by default. You can customize this by using the `--test-pattern` option.
-
-## Integration with CI/CD
-
-You can use this tool in CI/CD pipelines by running it in a headless browser mode:
-
-```bash
-wdio-test-runner-ui start --config path/to/wdio.ci.conf.js
+```
+project-root/
+├── e2e/
+│   ├── wdio.conf.js
+│   └── tests/
+│       └── example.test.ts
 ```
 
-Make sure your WebdriverIO config is set up for headless browser testing.
+If your project uses a different structure, you can specify the path to your WebdriverIO configuration and test files using the command-line options.
+
+## Programmatic Usage
+
+You can also use this package programmatically in your own code:
+
+```javascript
+const { startTestRunnerUI } = require('wdio-test-runner-ui');
+
+// Start with default options
+startTestRunnerUI();
+
+// Or with custom options
+startTestRunnerUI({
+  port: 8080,
+  baseDir: './tests',
+  testPattern: '**/*.spec.js',
+  excludePatterns: ['**/node_modules/**', '**/fixtures/**'],
+  wdioConfigPath: './wdio.custom.conf.js'
+});
+```
 
 ## Configuration
 
-This package does not use its own WebdriverIO configuration. It will always read and use your project's WebdriverIO configuration file. By default, it will look for:
+This package does not use its own WebdriverIO configuration. It will search for and use your project's WebdriverIO configuration file. By default, it looks for:
 
 - `wdio.conf.js`
 - `wdio.conf.ts`
 - `wdio.config.js`
 - `wdio.config.ts`
+- `e2e/wdio.conf.js`
+- `e2e/wdio.conf.ts`
+- `test/wdio.conf.js`
+- `test/wdio.conf.ts`
+- `tests/wdio.conf.js`
+- `tests/wdio.conf.ts`
+- `integration/wdio.conf.js`
+- `integration/wdio.conf.ts`
 
 If your configuration file has a different name or path, you can specify it using the `--config` option.
-
-```bash
-wdio-test-runner-ui start --config ./path/to/my-custom-wdio.conf.js
-```
 
 ## Contributing
 
